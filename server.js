@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const sass = require('sass');
 const fs = require('fs');
+const XLSX = require('xlsx');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,6 +11,21 @@ const PORT = process.env.PORT || 3000;
 // Middleware для статических файлов
 app.use(express.static('public'));
 app.use(express.json());
+
+// Настройка multer для загрузки файлов
+const upload = multer({ 
+  dest: 'uploads/',
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+        file.mimetype === 'application/vnd.ms-excel' ||
+        file.originalname.endsWith('.xlsx') ||
+        file.originalname.endsWith('.xls')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Тільки Excel файли дозволені'), false);
+    }
+  }
+});
 
 // Компиляция SCSS в CSS
 function compileSCSS() {
@@ -85,6 +102,99 @@ app.get('/api/books', (req, res) => {
     }
   ];
   res.json(books);
+});
+
+// API для экспорта матрицы в Excel
+app.post('/api/export-matrix', (req, res) => {
+  try {
+    const { matrix, books } = req.body;
+    
+    // Создаем рабочую книгу
+    const wb = XLSX.utils.book_new();
+    
+    // Подготавливаем данные для Excel
+    const excelData = [];
+    
+    // Заголовок с названиями книг
+    const header = ['', ...books.map(book => book.title)];
+    excelData.push(header);
+    
+    // Данные матрицы
+    books.forEach((book, rowIndex) => {
+      const row = [book.title];
+      books.forEach((_, colIndex) => {
+        row.push(matrix[rowIndex][colIndex] || 0);
+      });
+      excelData.push(row);
+    });
+    
+    // Создаем лист
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    
+    // Настройка ширины колонок
+    const colWidths = [{ wch: 20 }]; // Первая колонка для названий
+    books.forEach(() => colWidths.push({ wch: 8 })); // Колонки для значений
+    ws['!cols'] = colWidths;
+    
+    // Добавляем лист в книгу
+    XLSX.utils.book_append_sheet(wb, ws, 'Матрица сравнения');
+    
+    // Генерируем буфер
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    
+    // Отправляем файл
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename="comparison_matrix.xlsx"');
+    res.send(buffer);
+    
+  } catch (error) {
+    console.error('Ошибка экспорта:', error);
+    res.status(500).json({ error: 'Ошибка при экспорте матрицы' });
+  }
+});
+
+// API для импорта матрицы из Excel
+app.post('/api/import-matrix', upload.single('excelFile'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Файл не загружен' });
+    }
+    
+    // Читаем Excel файл
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    
+    // Конвертируем в JSON
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+    
+    // Очищаем временный файл
+    fs.unlinkSync(req.file.path);
+    
+    // Обрабатываем данные
+    if (jsonData.length < 2) {
+      return res.status(400).json({ error: 'Недостаточно данных в файле' });
+    }
+    
+    const header = jsonData[0];
+    const matrixData = jsonData.slice(1);
+    
+    // Извлекаем названия книг (пропускаем первую пустую ячейку)
+    const bookTitles = header.slice(1);
+    
+    // Создаем матрицу
+    const matrix = matrixData.map(row => row.slice(1));
+    
+    res.json({
+      success: true,
+      bookTitles,
+      matrix
+    });
+    
+  } catch (error) {
+    console.error('Ошибка импорта:', error);
+    res.status(500).json({ error: 'Ошибка при импорте файла' });
+  }
 });
 
 app.listen(PORT, () => {

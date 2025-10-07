@@ -505,10 +505,134 @@ class BookRankingApp {
       setTimeout(() => this.adaptBookSizes(), 100);
     }
   }
+
+  // Метод для експорту матриці в Excel
+  async exportToExcel() {
+    try {
+      const matrix = this.generateMatrix();
+      const response = await fetch('/api/export-matrix', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          matrix: matrix,
+          books: this.originalBooks
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'comparison_matrix.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        
+        console.log('Матриця успішно експортована в Excel');
+      } else {
+        throw new Error('Помилка при експорті');
+      }
+    } catch (error) {
+      console.error('Помилка експорту:', error);
+      alert('Помилка при експорті матриці в Excel');
+    }
+  }
+
+  // Метод для імпорту матриці з Excel
+  async importFromExcel(file) {
+    try {
+      const formData = new FormData();
+      formData.append('excelFile', file);
+
+      const response = await fetch('/api/import-matrix', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Оновлюємо порядок книг на основі імпортованої матриці
+        this.updateBooksOrderFromMatrix(result.matrix, result.bookTitles);
+        console.log('Матриця успішно імпортована з Excel');
+        alert('Матриця успішно імпортована з Excel файлу');
+      } else {
+        throw new Error(result.error || 'Помилка при імпорті');
+      }
+    } catch (error) {
+      console.error('Помилка імпорту:', error);
+      alert('Помилка при імпорті матриці з Excel: ' + error.message);
+    }
+  }
+
+  // Метод для оновлення порядку книг на основі імпортованої матриці
+  updateBooksOrderFromMatrix(matrix, bookTitles) {
+    // Знаходимо книги, які відповідають імпортованим назвам
+    const importedBooks = [];
+    bookTitles.forEach(title => {
+      const book = this.originalBooks.find(b => b.title === title);
+      if (book) {
+        importedBooks.push(book);
+      }
+    });
+
+    if (importedBooks.length > 0) {
+      // Оновлюємо порядок книг
+      this.books = [...importedBooks];
+      this.renderBooks();
+      this.updateMatrix();
+      this.adaptBookSizes();
+    }
+  }
+
+  // Метод для генерації матриці (використовується для експорту)
+  generateMatrix() {
+    const matrix = [];
+    for (let i = 0; i < this.originalBooks.length; i++) {
+      matrix[i] = [];
+      for (let j = 0; j < this.originalBooks.length; j++) {
+        if (i === j) {
+          matrix[i][j] = 0; // Діагональні елементи
+        } else {
+          const bookI = this.originalBooks[i];
+          const bookJ = this.originalBooks[j];
+          const currentRankI = this.getCurrentRank(bookI.id);
+          const currentRankJ = this.getCurrentRank(bookJ.id);
+          
+          if (currentRankI < currentRankJ) {
+            matrix[i][j] = 1; // Книга i краще книги j
+          } else {
+            matrix[i][j] = -1; // Книга i гірше книги j
+          }
+        }
+      }
+    }
+    return matrix;
+  }
 }
 
 // Ініціалізація додатку при завантаженні сторінки
 let app;
 document.addEventListener('DOMContentLoaded', () => {
   app = new BookRankingApp();
+  
+  // Додаємо обробники для Excel кнопок
+  document.getElementById('exportExcel').addEventListener('click', () => {
+    app.exportToExcel();
+  });
+  
+  document.getElementById('importExcel').addEventListener('click', () => {
+    document.getElementById('excelFileInput').click();
+  });
+  
+  document.getElementById('excelFileInput').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      app.importFromExcel(file);
+    }
+  });
 });
