@@ -35,45 +35,45 @@ class BookRankingApp {
       this.books = [
         { 
           id: 1, 
-          title: "Війна і мир", 
-          author: "Лев Толстой", 
-          color: "#FF6B6B", 
-          image: "https://covers.openlibrary.org/b/isbn/9780140447934-M.jpg" 
-        },
-        { 
-          id: 2, 
-          title: "1984", 
-          author: "Джордж Оруелл", 
-          color: "#4ECDC4", 
-          image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
-        },
-        { 
-          id: 3, 
-          title: "Майстер і Маргарита", 
-          author: "Михайло Булгаков", 
-          color: "#45B7D1", 
-          image: "https://covers.openlibrary.org/b/isbn/9780141180144-M.jpg" 
-        },
-        { 
-          id: 4, 
-          title: "Злочин і кара", 
-          author: "Федір Достоєвський", 
-          color: "#96CEB4", 
-          image: "https://covers.openlibrary.org/b/isbn/9780143058144-M.jpg" 
-        },
-        { 
-          id: 5, 
           title: "Гаррі Поттер", 
           author: "Дж. К. Роулінг", 
-          color: "#FFEAA7", 
+          color: "#FF6B6B", 
           image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" 
         },
         { 
-          id: 6, 
+          id: 2, 
           title: "Володар кілець", 
           author: "Дж. Р. Р. Толкін", 
-          color: "#DDA0DD", 
+          color: "#4ECDC4", 
           image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" 
+        },
+        { 
+          id: 3, 
+          title: "1984", 
+          author: "Джордж Оруелл", 
+          color: "#45B7D1", 
+          image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
+        },
+        { 
+          id: 4, 
+          title: "Великий Гетсбі", 
+          author: "Френсіс Скотт Фіцджеральд", 
+          color: "#96CEB4", 
+          image: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" 
+        },
+        { 
+          id: 5, 
+          title: "Гордість і упередження", 
+          author: "Джейн Остін", 
+          color: "#FFEAA7", 
+          image: "https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg" 
+        },
+        { 
+          id: 6, 
+          title: "Мобі Дік", 
+          author: "Герман Мелвілл", 
+          color: "#DDA0DD", 
+          image: "https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg" 
         }
       ];
     }
@@ -556,10 +556,10 @@ class BookRankingApp {
       const result = await response.json();
 
       if (result.success) {
-        // Оновлюємо порядок книг на основі імпортованої матриці
-        this.updateBooksOrderFromMatrix(result.matrix, result.bookTitles);
-        console.log('Матриця успішно імпортована з Excel');
-        alert('Матриця успішно імпортована з Excel файлу');
+        // Замінюємо поточні книги на нові з Excel файлу
+        this.replaceBooksWithNewOnes(result.newBooks, result.matrix);
+        console.log('Книги успішно замінені на нові з Excel файлу');
+        alert(`Книги успішно замінені на нові з Excel файлу!\n\nНові книги:\n${result.newBooks.map(book => `• ${book.title}`).join('\n')}`);
       } else {
         throw new Error(result.error || 'Помилка при імпорті');
       }
@@ -569,7 +569,21 @@ class BookRankingApp {
     }
   }
 
-  // Метод для оновлення порядку книг на основі імпортованої матриці
+  // Метод для заміни поточних книг на нові з Excel
+  replaceBooksWithNewOnes(newBooks, matrix) {
+    // Замінюємо поточні книги на нові
+    this.books = [...newBooks];
+    this.originalBooks = [...newBooks];
+    
+    // Оновлюємо відображення
+    this.renderBooks();
+    this.updateMatrix();
+    this.adaptBookSizes();
+    
+    console.log('Книги замінені:', newBooks.map(book => book.title));
+  }
+
+  // Метод для оновлення порядку книг на основі імпортованої матриці (застарілий)
   updateBooksOrderFromMatrix(matrix, bookTitles) {
     // Знаходимо книги, які відповідають імпортованим назвам
     const importedBooks = [];

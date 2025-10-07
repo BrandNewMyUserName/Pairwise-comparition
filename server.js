@@ -60,45 +60,45 @@ app.get('/api/books', (req, res) => {
   const books = [
     { 
       id: 1, 
-      title: "Війна і мир", 
-      author: "Лев Толстой", 
-      color: "#FF6B6B", 
-      image: "https://covers.openlibrary.org/b/isbn/9780140447934-M.jpg" 
-    },
-    { 
-      id: 2, 
-      title: "1984", 
-      author: "Джордж Оруелл", 
-      color: "#4ECDC4", 
-      image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
-    },
-    { 
-      id: 3, 
-      title: "Майстер і Маргарита", 
-      author: "Михайло Булгаков", 
-      color: "#45B7D1", 
-      image: "https://covers.openlibrary.org/b/isbn/9780141180144-M.jpg" 
-    },
-    { 
-      id: 4, 
-      title: "Злочин і кара", 
-      author: "Федір Достоєвський", 
-      color: "#96CEB4", 
-      image: "https://covers.openlibrary.org/b/isbn/9780143058144-M.jpg" 
-    },
-    { 
-      id: 5, 
       title: "Гаррі Поттер", 
       author: "Дж. К. Роулінг", 
-      color: "#FFEAA7", 
+      color: "#FF6B6B", 
       image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" 
     },
     { 
-      id: 6, 
+      id: 2, 
       title: "Володар кілець", 
       author: "Дж. Р. Р. Толкін", 
-      color: "#DDA0DD", 
+      color: "#4ECDC4", 
       image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" 
+    },
+    { 
+      id: 3, 
+      title: "1984", 
+      author: "Джордж Оруелл", 
+      color: "#45B7D1", 
+      image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
+    },
+    { 
+      id: 4, 
+      title: "Великий Гетсбі", 
+      author: "Френсіс Скотт Фіцджеральд", 
+      color: "#96CEB4", 
+      image: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" 
+    },
+    { 
+      id: 5, 
+      title: "Гордість і упередження", 
+      author: "Джейн Остін", 
+      color: "#FFEAA7", 
+      image: "https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg" 
+    },
+    { 
+      id: 6, 
+      title: "Мобі Дік", 
+      author: "Герман Мелвілл", 
+      color: "#DDA0DD", 
+      image: "https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg" 
     }
   ];
   res.json(books);
@@ -185,10 +185,20 @@ app.post('/api/import-matrix', upload.single('excelFile'), (req, res) => {
     // Создаем матрицу
     const matrix = matrixData.map(row => row.slice(1));
     
+    // Создаем новые книги на основе названий из Excel
+    const newBooks = bookTitles.map((title, index) => ({
+      id: index + 1,
+      title: title,
+      author: `Автор ${index + 1}`, // Временный автор, можно будет обновить
+      color: `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`, // Случайный цвет
+      image: null // Без изображения по умолчанию
+    }));
+    
     res.json({
       success: true,
-      bookTitles,
-      matrix
+      newBooks,
+      matrix,
+      bookTitles
     });
     
   } catch (error) {
