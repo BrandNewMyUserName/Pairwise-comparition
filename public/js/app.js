@@ -52,6 +52,25 @@ class BookRankingApp {
       const bookElement = this.createBookElement(book, index + 1);
       this.booksContainer.appendChild(bookElement);
     });
+    
+    // Адаптируем размеры книг в зависимости от их количества
+    this.adaptBookSizes();
+  }
+  
+  adaptBookSizes() {
+    const bookCount = this.books.length;
+    const containerHeight = this.booksContainer.clientHeight;
+    const availableHeight = containerHeight - 32; // учитываем padding
+    const gapHeight = (bookCount - 1) * 2; // gap между книгами
+    const bookHeight = Math.max(60, Math.min(120, (availableHeight - gapHeight) / bookCount));
+    
+    // Применяем высоту к книгам
+    const books = this.booksContainer.querySelectorAll('.book');
+    books.forEach(book => {
+      book.style.minHeight = `${bookHeight}px`;
+    });
+    
+    console.log(`Адаптировано ${bookCount} книг, высота: ${bookHeight}px`);
   }
   
   createBookElement(book, rank) {
@@ -60,6 +79,10 @@ class BookRankingApp {
     bookDiv.draggable = true;
     bookDiv.dataset.bookId = book.id;
     bookDiv.dataset.rank = rank;
+    
+    // Знаходимо оригінальну позицію книги
+    const originalIndex = this.originalBooks.findIndex(b => b.id === book.id);
+    const originalRank = originalIndex + 1;
     
     // Створюємо зображення з fallback
     const coverElement = this.createBookCover(book);
@@ -70,7 +93,7 @@ class BookRankingApp {
         <h3>${book.title}</h3>
         <p>${book.author}</p>
       </div>
-      <div class="book-rank">${rank}</div>
+      <div class="book-original-rank" title="Оригінальна позиція: ${originalRank}">${originalRank}</div>
       <div class="book-delete" onclick="app.deleteBook(${book.id})">×</div>
     `;
     
@@ -202,10 +225,6 @@ class BookRankingApp {
       if (book) {
         newOrder.push(book);
         element.dataset.rank = index + 1;
-        const rankElement = element.querySelector('.book-rank');
-        if (rankElement) {
-          rankElement.textContent = index + 1;
-        }
       }
     });
     
@@ -414,6 +433,9 @@ class BookRankingApp {
     this.renderBooks();
     this.updateMatrix();
     this.hideAddBookModal();
+    
+    // Адаптируем размеры после добавления
+    setTimeout(() => this.adaptBookSizes(), 100);
   }
   
   deleteBook(bookId) {
@@ -424,6 +446,9 @@ class BookRankingApp {
       
       this.renderBooks();
       this.updateMatrix();
+      
+      // Адаптируем размеры после удаления
+      setTimeout(() => this.adaptBookSizes(), 100);
     }
   }
 }

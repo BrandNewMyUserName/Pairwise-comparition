@@ -126,26 +126,29 @@ header {
   display: flex;
   gap: 20px;
   align-items: flex-start;
+  height: calc(100vh - 200px);
+  min-height: 500px;
 }
 
 // Контейнер книг
 .books-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  min-height: 400px;
+  gap: 2px;
+  height: 100%;
   padding: 16px;
   background: white;
   border-radius: $border-radius;
   box-shadow: $metro-shadow;
   flex: 1;
+  overflow-y: auto;
 }
 
 // Стили книг
 .book {
   display: flex;
   align-items: center;
-  padding: 16px;
+  padding: 12px 16px;
   background: white;
   border-radius: $border-radius;
   box-shadow: $metro-shadow;
@@ -153,7 +156,8 @@ header {
   transition: $transition;
   position: relative;
   border-left: 4px solid;
-  min-height: 80px;
+  min-height: 60px;
+  flex-shrink: 0;
   
   &:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
@@ -188,64 +192,74 @@ header {
   }
   
   .book-cover {
-    width: 60px;
-    height: 80px;
+    width: 45px;
+    height: 60px;
     border-radius: 4px;
-    margin-right: 20px;
+    margin-right: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 0.8rem;
+    font-size: 0.7rem;
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
   }
   
   .book-info {
     flex: 1;
+    min-width: 0;
     
     h3 {
-      font-size: 1.3rem;
-      margin-bottom: 5px;
+      font-size: 1.1rem;
+      margin-bottom: 3px;
       color: $dark-color;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     
     p {
       color: #7f8c8d;
-      font-size: 1rem;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
   
-  .book-rank {
+  
+  .book-original-rank {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: $primary-color;
+    background: $secondary-color;
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 10px;
+    opacity: 0.8;
   }
   
   .book-delete {
     position: absolute;
     top: 8px;
-    right: 40px;
+    right: 36px;
     background: $danger-color;
     color: white;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 12px;
     cursor: pointer;
     opacity: 0;
     transition: $transition;
@@ -502,15 +516,20 @@ header {
   .main-content {
     flex-direction: column;
     gap: 20px;
+    height: auto;
+    min-height: calc(100vh - 200px);
   }
   
   .matrix-container {
     width: 100%;
     order: 2;
+    height: 400px;
   }
   
   .books-container {
     order: 1;
+    height: calc(100vh - 600px);
+    min-height: 300px;
   }
   
   #comparisonMatrix {
@@ -532,6 +551,20 @@ header {
     padding: 10px;
   }
   
+  .main-content {
+    height: auto;
+    min-height: calc(100vh - 150px);
+  }
+  
+  .books-container {
+    height: calc(100vh - 500px);
+    min-height: 250px;
+  }
+  
+  .matrix-container {
+    height: 350px;
+  }
+  
   header h1 {
     font-size: 2rem;
   }
@@ -547,16 +580,17 @@ header {
   }
   
   .book {
-    padding: 15px;
+    padding: 10px 12px;
+    min-height: 50px;
     
     .book-cover {
-      width: 50px;
-      height: 70px;
-      margin-right: 15px;
+      width: 35px;
+      height: 50px;
+      margin-right: 12px;
     }
     
     .book-info h3 {
-      font-size: 1.1rem;
+      font-size: 1rem;
     }
   }
   
@@ -582,5 +616,31 @@ header {
   .modal-content {
     width: 95%;
     padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    min-height: calc(100vh - 120px);
+  }
+  
+  .books-container {
+    height: calc(100vh - 400px);
+    min-height: 200px;
+  }
+  
+  .matrix-container {
+    height: 300px;
+  }
+  
+  .book {
+    min-height: 45px;
+    padding: 8px 10px;
+    
+    .book-cover {
+      width: 30px;
+      height: 40px;
+      margin-right: 10px;
+    }
   }
 }
