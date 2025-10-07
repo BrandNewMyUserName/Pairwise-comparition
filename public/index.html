@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ранжування книг - Pairwise Comparison</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Ранжування книг</h1>
+            <p>Перетягніть книги для зміни їх порядку. Книга вище всіх має кращі оцінки.</p>
+        </header>
+
+        <div class="controls">
+            <button id="toggleMatrix" class="btn btn-primary">Показати матрицю порівнянь</button>
+            <button id="resetOrder" class="btn btn-secondary">Скинути порядок</button>
+            <button id="addBook" class="btn btn-success">Додати книгу</button>
+        </div>
+
+        <div class="books-container" id="booksContainer">
+            <!-- Книги будут добавлены динамически -->
+        </div>
+
+        <div class="matrix-container" id="matrixContainer" style="display: none;">
+            <h3>Матриця порівнянь</h3>
+            <div class="matrix-wrapper">
+                <table id="comparisonMatrix">
+                    <thead>
+                        <tr>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Матриця буде створена динамічно -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="matrix-legend">
+                <div class="legend-item">
+                    <span class="legend-color better"></span>
+                    <span>1 - краще</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color diagonal"></span>
+                    <span>0 - діагональ</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color worse"></span>
+                    <span>-1 - гірше</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальне вікно для додавання книги -->
+        <div id="addBookModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Додати нову книгу</h3>
+                <form id="addBookForm">
+                    <div class="form-group">
+                        <label for="bookTitle">Назва книги:</label>
+                        <input type="text" id="bookTitle" name="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAuthor">Автор:</label>
+                        <input type="text" id="bookAuthor" name="author" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookColor">Колір:</label>
+                        <input type="color" id="bookColor" name="color" value="#3498db">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Додати</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAdd">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
