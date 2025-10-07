@@ -33,12 +33,48 @@ class BookRankingApp {
       console.error('Помилка завантаження книг:', error);
       // Fallback дані
       this.books = [
-        { id: 1, title: "Війна і мир", author: "Лев Толстой", color: "#FF6B6B", image: "https://covers.openlibrary.org/b/isbn/9780140447934-M.jpg" },
-        { id: 2, title: "1984", author: "Джордж Оруелл", color: "#4ECDC4", image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" },
-        { id: 3, title: "Майстер і Маргарита", author: "Михайло Булгаков", color: "#45B7D1", image: "https://covers.openlibrary.org/b/isbn/9780141180144-M.jpg" },
-        { id: 4, title: "Злочин і кара", author: "Федір Достоєвський", color: "#96CEB4", image: "https://covers.openlibrary.org/b/isbn/9780143058144-M.jpg" },
-        { id: 5, title: "Гаррі Поттер", author: "Дж. К. Роулінг", color: "#FFEAA7", image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" },
-        { id: 6, title: "Володар кілець", author: "Дж. Р. Р. Толкін", color: "#DDA0DD", image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" }
+        { 
+          id: 1, 
+          title: "Війна і мир", 
+          author: "Лев Толстой", 
+          color: "#FF6B6B", 
+          image: "https://covers.openlibrary.org/b/isbn/9780140447934-M.jpg" 
+        },
+        { 
+          id: 2, 
+          title: "1984", 
+          author: "Джордж Оруелл", 
+          color: "#4ECDC4", 
+          image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
+        },
+        { 
+          id: 3, 
+          title: "Майстер і Маргарита", 
+          author: "Михайло Булгаков", 
+          color: "#45B7D1", 
+          image: "https://covers.openlibrary.org/b/isbn/9780141180144-M.jpg" 
+        },
+        { 
+          id: 4, 
+          title: "Злочин і кара", 
+          author: "Федір Достоєвський", 
+          color: "#96CEB4", 
+          image: "https://covers.openlibrary.org/b/isbn/9780143058144-M.jpg" 
+        },
+        { 
+          id: 5, 
+          title: "Гаррі Поттер", 
+          author: "Дж. К. Роулінг", 
+          color: "#FFEAA7", 
+          image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" 
+        },
+        { 
+          id: 6, 
+          title: "Володар кілець", 
+          author: "Дж. Р. Р. Толкін", 
+          color: "#DDA0DD", 
+          image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" 
+        }
       ];
     }
     // Зберігаємо оригінальний порядок для матриці
@@ -117,16 +153,34 @@ class BookRankingApp {
       img.style.height = '100%';
       img.style.objectFit = 'cover';
       img.style.borderRadius = '4px';
+      img.loading = 'lazy'; // Ленивая загрузка для производительности
+      
+      img.onload = () => {
+        console.log(`Зображення завантажено: ${book.title}`);
+      };
       
       img.onerror = () => {
+        console.log(`Помилка завантаження зображення для: ${book.title}`);
         // Якщо зображення не завантажилося, показуємо першу букву
         coverDiv.innerHTML = book.title.charAt(0);
+        coverDiv.style.display = 'flex';
+        coverDiv.style.alignItems = 'center';
+        coverDiv.style.justifyContent = 'center';
+        coverDiv.style.color = 'white';
+        coverDiv.style.fontWeight = 'bold';
+        coverDiv.style.fontSize = '0.7rem';
       };
       
       coverDiv.appendChild(img);
     } else {
       // Якщо немає зображення, показуємо першу букву
       coverDiv.textContent = book.title.charAt(0);
+      coverDiv.style.display = 'flex';
+      coverDiv.style.alignItems = 'center';
+      coverDiv.style.justifyContent = 'center';
+      coverDiv.style.color = 'white';
+      coverDiv.style.fontWeight = 'bold';
+      coverDiv.style.fontSize = '0.7rem';
     }
     
     return coverDiv;
