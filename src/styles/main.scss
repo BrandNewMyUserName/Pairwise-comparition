@@ -121,17 +121,24 @@ header {
   }
 }
 
+// Основний контент
+.main-content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
 // Контейнер книг
 .books-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 40px;
   min-height: 400px;
   padding: 16px;
   background: white;
   border-radius: $border-radius;
   box-shadow: $metro-shadow;
+  flex: 1;
 }
 
 // Стили книг
@@ -255,22 +262,23 @@ header {
 
 // Матрица сравнений
 .matrix-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   border-radius: $border-radius;
-  padding: 30px;
-  box-shadow: $box-shadow;
-  margin-top: 20px;
+  padding: 20px;
+  box-shadow: $metro-shadow;
+  width: 400px;
+  flex-shrink: 0;
   
   h3 {
-    text-align: center;
-    margin-bottom: 20px;
+    text-align: left;
+    margin-bottom: 16px;
     color: $dark-color;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: 400;
   }
 }
 
 .matrix-wrapper {
-  overflow-x: auto;
   margin-bottom: 20px;
 }
 
@@ -280,24 +288,27 @@ header {
   margin: 0 auto;
   background: white;
   border-radius: $border-radius;
-  overflow: hidden;
   box-shadow: $metro-shadow;
   font-size: 12px;
+  table-layout: fixed;
   
   th, td {
     padding: 8px 4px;
     text-align: center;
     border: 1px solid #e1e1e1;
-    min-width: 50px;
-    height: 40px;
+    width: 40px;
+    height: 35px;
     transition: $transition;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   
   th {
     background: $primary-color;
     color: white;
     font-weight: 600;
-    font-size: 11px;
+    font-size: 10px;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -305,7 +316,7 @@ header {
   
   td {
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
     cursor: default;
     
     &:hover {
@@ -334,23 +345,24 @@ header {
 
 .matrix-legend {
   display: flex;
-  justify-content: center;
-  gap: 30px;
+  justify-content: flex-start;
+  gap: 16px;
   flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.8rem;
   color: $dark-color;
 }
 
 .legend-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
   
   &.better {
     background: lighten($success-color, 30%);
@@ -486,6 +498,35 @@ header {
 }
 
 // Адаптивность
+@media (max-width: 1024px) {
+  .main-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .matrix-container {
+    width: 100%;
+    order: 2;
+  }
+  
+  .books-container {
+    order: 1;
+  }
+  
+  #comparisonMatrix {
+    th, td {
+      width: 35px;
+      height: 30px;
+      font-size: 10px;
+      padding: 4px 2px;
+    }
+    
+    th {
+      font-size: 8px;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -523,6 +564,19 @@ header {
     flex-direction: column;
     align-items: center;
     gap: 15px;
+  }
+  
+  #comparisonMatrix {
+    th, td {
+      width: 30px;
+      height: 25px;
+      font-size: 9px;
+      padding: 3px 1px;
+    }
+    
+    th {
+      font-size: 7px;
+    }
   }
   
   .modal-content {

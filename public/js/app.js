@@ -33,12 +33,12 @@ class BookRankingApp {
       console.error('Помилка завантаження книг:', error);
       // Fallback дані
       this.books = [
-        { id: 1, title: "Війна і мир", author: "Лев Толстой", color: "#FF6B6B" },
-        { id: 2, title: "1984", author: "Джордж Оруелл", color: "#4ECDC4" },
-        { id: 3, title: "Майстер і Маргарита", author: "Михайло Булгаков", color: "#45B7D1" },
-        { id: 4, title: "Злочин і кара", author: "Федір Достоєвський", color: "#96CEB4" },
-        { id: 5, title: "Гаррі Поттер", author: "Дж. К. Роулінг", color: "#FFEAA7" },
-        { id: 6, title: "Володар кілець", author: "Дж. Р. Р. Толкін", color: "#DDA0DD" }
+        { id: 1, title: "Війна і мир", author: "Лев Толстой", color: "#FF6B6B", image: "https://covers.openlibrary.org/b/isbn/9780140447934-M.jpg" },
+        { id: 2, title: "1984", author: "Джордж Оруелл", color: "#4ECDC4", image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" },
+        { id: 3, title: "Майстер і Маргарита", author: "Михайло Булгаков", color: "#45B7D1", image: "https://covers.openlibrary.org/b/isbn/9780141180144-M.jpg" },
+        { id: 4, title: "Злочин і кара", author: "Федір Достоєвський", color: "#96CEB4", image: "https://covers.openlibrary.org/b/isbn/9780143058144-M.jpg" },
+        { id: 5, title: "Гаррі Поттер", author: "Дж. К. Роулінг", color: "#FFEAA7", image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" },
+        { id: 6, title: "Володар кілець", author: "Дж. Р. Р. Толкін", color: "#DDA0DD", image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" }
       ];
     }
     // Зберігаємо оригінальний порядок для матриці
@@ -61,10 +61,11 @@ class BookRankingApp {
     bookDiv.dataset.bookId = book.id;
     bookDiv.dataset.rank = rank;
     
+    // Створюємо зображення з fallback
+    const coverElement = this.createBookCover(book);
+    
     bookDiv.innerHTML = `
-      <div class="book-cover" style="background-color: ${book.color}">
-        ${book.title.charAt(0)}
-      </div>
+      ${coverElement.outerHTML}
       <div class="book-info">
         <h3>${book.title}</h3>
         <p>${book.author}</p>
@@ -77,6 +78,35 @@ class BookRankingApp {
     this.addDragListeners(bookDiv);
     
     return bookDiv;
+  }
+  
+  createBookCover(book) {
+    const coverDiv = document.createElement('div');
+    coverDiv.className = 'book-cover';
+    coverDiv.style.backgroundColor = book.color;
+    
+    // Спробуємо завантажити зображення
+    if (book.image) {
+      const img = document.createElement('img');
+      img.src = book.image;
+      img.alt = book.title;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.style.borderRadius = '4px';
+      
+      img.onerror = () => {
+        // Якщо зображення не завантажилося, показуємо першу букву
+        coverDiv.innerHTML = book.title.charAt(0);
+      };
+      
+      coverDiv.appendChild(img);
+    } else {
+      // Якщо немає зображення, показуємо першу букву
+      coverDiv.textContent = book.title.charAt(0);
+    }
+    
+    return coverDiv;
   }
   
   addDragListeners(element) {
@@ -207,10 +237,10 @@ class BookRankingApp {
     
     this.originalBooks.forEach(book => {
       const th = document.createElement('th');
-      th.textContent = book.title.substring(0, 8) + (book.title.length > 8 ? '...' : '');
+      th.textContent = book.title.substring(0, 6) + (book.title.length > 6 ? '...' : '');
       th.title = book.title; // Повна назва в tooltip
-      th.style.fontSize = '12px';
-      th.style.padding = '8px 4px';
+      th.style.fontSize = '10px';
+      th.style.padding = '6px 2px';
       headerRow.appendChild(th);
     });
     
@@ -225,20 +255,20 @@ class BookRankingApp {
       
       // Перша клітинка - назва книги
       const firstCell = document.createElement('td');
-      firstCell.textContent = book.title.substring(0, 8) + (book.title.length > 8 ? '...' : '');
+      firstCell.textContent = book.title.substring(0, 6) + (book.title.length > 6 ? '...' : '');
       firstCell.title = book.title;
       firstCell.style.fontWeight = 'bold';
       firstCell.style.background = '#f8f9fa';
-      firstCell.style.fontSize = '12px';
-      firstCell.style.padding = '8px 4px';
+      firstCell.style.fontSize = '10px';
+      firstCell.style.padding = '6px 2px';
       row.appendChild(firstCell);
       
       // Решта клітинок - значення порівняння
       this.originalBooks.forEach((otherBook, colIndex) => {
         const cell = document.createElement('td');
-        cell.style.fontSize = '14px';
+        cell.style.fontSize = '12px';
         cell.style.fontWeight = 'bold';
-        cell.style.padding = '8px';
+        cell.style.padding = '6px 2px';
         
         if (rowIndex === colIndex) {
           // Діагональні елементи
@@ -362,6 +392,7 @@ class BookRankingApp {
     const title = document.getElementById('bookTitle').value.trim();
     const author = document.getElementById('bookAuthor').value.trim();
     const color = document.getElementById('bookColor').value;
+    const image = document.getElementById('bookImage').value.trim();
     
     if (!title || !author) {
       alert('Будь ласка, заповніть всі поля');
@@ -372,7 +403,8 @@ class BookRankingApp {
       id: this.nextBookId++,
       title: title,
       author: author,
-      color: color
+      color: color,
+      image: image || null
     };
     
     // Додаємо книгу в кінець списку

@@ -19,37 +19,39 @@
             <button id="addBook" class="btn btn-success">Додати книгу</button>
         </div>
 
-        <div class="books-container" id="booksContainer">
-            <!-- Книги будут добавлены динамически -->
-        </div>
-
-        <div class="matrix-container" id="matrixContainer" style="display: none;">
-            <h3>Матриця порівнянь</h3>
-            <div class="matrix-wrapper">
-                <table id="comparisonMatrix">
-                    <thead>
-                        <tr>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Матриця буде створена динамічно -->
-                    </tbody>
-                </table>
+        <div class="main-content">
+            <div class="matrix-container" id="matrixContainer" style="display: none;">
+                <h3>Матриця порівнянь</h3>
+                <div class="matrix-wrapper">
+                    <table id="comparisonMatrix">
+                        <thead>
+                            <tr>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Матриця буде створена динамічно -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="matrix-legend">
+                    <div class="legend-item">
+                        <span class="legend-color better"></span>
+                        <span>1 - краще</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color diagonal"></span>
+                        <span>0 - діагональ</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color worse"></span>
+                        <span>-1 - гірше</span>
+                    </div>
+                </div>
             </div>
-            <div class="matrix-legend">
-                <div class="legend-item">
-                    <span class="legend-color better"></span>
-                    <span>1 - краще</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color diagonal"></span>
-                    <span>0 - діагональ</span>
-                </div>
-                <div class="legend-item">
-                    <span class="legend-color worse"></span>
-                    <span>-1 - гірше</span>
-                </div>
+
+            <div class="books-container" id="booksContainer">
+                <!-- Книги будуть додані динамічно -->
             </div>
         </div>
 
@@ -70,6 +72,10 @@
                     <div class="form-group">
                         <label for="bookColor">Колір:</label>
                         <input type="color" id="bookColor" name="color" value="#3498db">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookImage">URL зображення (опціонально):</label>
+                        <input type="url" id="bookImage" name="image" placeholder="https://example.com/image.jpg">
                     </div>
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary">Додати</button>

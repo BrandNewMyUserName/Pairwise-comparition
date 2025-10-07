@@ -89,16 +89,22 @@ header p {
   background: #0e6b0e;
 }
 
+.main-content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
 .books-container {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 40px;
   min-height: 400px;
   padding: 16px;
   background: white;
   border-radius: 2px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  flex: 1;
 }
 
 .book {
@@ -207,21 +213,22 @@ header p {
 }
 
 .matrix-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: white;
   border-radius: 2px;
-  padding: 30px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  width: 400px;
+  flex-shrink: 0;
 }
 .matrix-container h3 {
-  text-align: center;
-  margin-bottom: 20px;
+  text-align: left;
+  margin-bottom: 16px;
   color: #323130;
-  font-size: 1.5rem;
+  font-size: 1.2rem;
+  font-weight: 400;
 }
 
 .matrix-wrapper {
-  overflow-x: auto;
   margin-bottom: 20px;
 }
 
@@ -231,30 +238,33 @@ header p {
   margin: 0 auto;
   background: white;
   border-radius: 2px;
-  overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
   font-size: 12px;
+  table-layout: fixed;
 }
 #comparisonMatrix th, #comparisonMatrix td {
   padding: 8px 4px;
   text-align: center;
   border: 1px solid #e1e1e1;
-  min-width: 50px;
-  height: 40px;
+  width: 40px;
+  height: 35px;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 #comparisonMatrix th {
   background: #0078d4;
   color: white;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 10px;
   position: sticky;
   top: 0;
   z-index: 10;
 }
 #comparisonMatrix td {
   font-weight: bold;
-  font-size: 13px;
+  font-size: 12px;
   cursor: default;
 }
 #comparisonMatrix td:hover {
@@ -278,23 +288,24 @@ header p {
 
 .matrix-legend {
   display: flex;
-  justify-content: center;
-  gap: 30px;
+  justify-content: flex-start;
+  gap: 16px;
   flex-wrap: wrap;
+  margin-top: 12px;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.8rem;
   color: #323130;
 }
 
 .legend-color {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
 }
 .legend-color.better {
   background: rgb(62.8, 230.2, 62.8);
@@ -414,6 +425,28 @@ header p {
   margin-top: 24px;
 }
 
+@media (max-width: 1024px) {
+  .main-content {
+    flex-direction: column;
+    gap: 20px;
+  }
+  .matrix-container {
+    width: 100%;
+    order: 2;
+  }
+  .books-container {
+    order: 1;
+  }
+  #comparisonMatrix th, #comparisonMatrix td {
+    width: 35px;
+    height: 30px;
+    font-size: 10px;
+    padding: 4px 2px;
+  }
+  #comparisonMatrix th {
+    font-size: 8px;
+  }
+}
 @media (max-width: 768px) {
   .container {
     padding: 10px;
@@ -444,6 +477,15 @@ header p {
     flex-direction: column;
     align-items: center;
     gap: 15px;
+  }
+  #comparisonMatrix th, #comparisonMatrix td {
+    width: 30px;
+    height: 25px;
+    font-size: 9px;
+    padding: 3px 1px;
+  }
+  #comparisonMatrix th {
+    font-size: 7px;
   }
   .modal-content {
     width: 95%;
