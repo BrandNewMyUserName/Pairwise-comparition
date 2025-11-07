@@ -160,9 +160,10 @@ header {
 
 // Стили книг
 .book {
+  /* Зменшено розміри щоб вмістити більше елементів без прокрутки сторінки */
   display: flex;
   align-items: center;
-  padding: 12px 16px;
+  padding: 8px 12px; /* було 12px 16px */
   background: white;
   border-radius: $border-radius;
   box-shadow: $metro-shadow;
@@ -170,7 +171,7 @@ header {
   transition: $transition;
   position: relative;
   border-left: 4px solid;
-  min-height: 60px;
+  min-height: 44px; /* було 60px */
   flex-shrink: 0;
   
   &:hover {
@@ -206,16 +207,16 @@ header {
   }
   
   .book-cover {
-    width: 45px;
-    height: 60px;
+    width: 36px;  /* було 45px */
+    height: 48px; /* було 60px */
     border-radius: 4px;
-    margin-right: 16px;
+    margin-right: 12px; /* було 16px */
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
     font-weight: bold;
-    font-size: 0.7rem;
+    font-size: 0.65rem; /* трохи менше */
     text-align: center;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     flex-shrink: 0;
@@ -226,7 +227,7 @@ header {
     min-width: 0;
     
     h3 {
-      font-size: 1.1rem;
+      font-size: 1rem; /* було 1.1rem */
       margin-bottom: 3px;
       color: $dark-color;
       white-space: nowrap;
@@ -236,7 +237,7 @@ header {
     
     p {
       color: #7f8c8d;
-      font-size: 0.9rem;
+      font-size: 0.85rem; /* трохи менший */
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -525,7 +526,7 @@ header {
   margin-top: 24px;
 }
 
-// Адаптивность
+// Адаптивність
 @media (max-width: 1024px) {
   .main-content {
     flex-direction: column;
@@ -594,17 +595,17 @@ header {
   }
   
   .book {
-    padding: 10px 12px;
-    min-height: 50px;
+    padding: 6px 10px; /* зменшено */
+    min-height: 40px; /* зменшено */
     
     .book-cover {
-      width: 35px;
-      height: 50px;
-      margin-right: 12px;
+      width: 30px;  /* було 35px */
+      height: 42px; /* було 50px */
+      margin-right: 10px;
     }
     
     .book-info h3 {
-      font-size: 1rem;
+      font-size: 0.95rem; /* трохи зменшено */
     }
   }
   
@@ -648,13 +649,17 @@ header {
   }
   
   .book {
-    min-height: 45px;
-    padding: 8px 10px;
+    min-height: 36px; /* зменшено */
+    padding: 6px 8px; /* зменшено */
     
     .book-cover {
-      width: 30px;
-      height: 40px;
-      margin-right: 10px;
+      width: 28px;  /* було 30px */
+      height: 36px; /* було 40px */
+      margin-right: 8px;
+    }
+    
+    .book-info h3 {
+      font-size: 0.9rem;
     }
   }
 }
