@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Колективне ранжування об'єктів - Лабораторна робота №2</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .experts-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .experts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .experts-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .expert-card {
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+        .expert-card h3 {
+            margin: 0 0 10px 0;
+            color: #323130;
+        }
+        .expert-card .expert-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        .expert-card .expert-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .rankings-matrix-container {
+            margin-top: 40px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .rankings-matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .rankings-matrix-table th,
+        .rankings-matrix-table td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #e5e5e5;
+        }
+        .rankings-matrix-table th {
+            background: #0078d4;
+            color: white;
+            font-weight: 600;
+        }
+        .rankings-matrix-table td.deleted {
+            background: #ffebee;
+            color: #c62828;
+            font-weight: bold;
+        }
+        .compromise-section {
+            margin-top: 40px;
+            background: white;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .compromise-methods {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .competence-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .competence-table th,
+        .competence-table td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e5e5e5;
+        }
+        .competence-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .conflicts-section {
+            margin-top: 40px;
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .conflict-item {
+            padding: 10px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Колективне ранжування об'єктів</h1>
+            <p>Лабораторна робота №2 - Проєктування експертних систем</p>
+            <a href="index.html" class="btn btn-secondary" style="text-decoration: none; color: white; display: inline-block; margin-top: 10px;">← Повернутися до індивідуального ранжування</a>
+        </header>
+
+        <div class="experts-container">
+            <div class="experts-header">
+                <h2>Експерти</h2>
+                <button id="addExpertBtn" class="btn btn-success">+ Додати експерта</button>
+            </div>
+
+            <div id="expertsList" class="experts-list">
+                <!-- Список експертів буде додано динамічно -->
+            </div>
+
+            <div class="rankings-matrix-container">
+                <h2>Матриця ранжувань експертів</h2>
+                <button id="refreshMatrixBtn" class="btn btn-primary">Оновити матрицю</button>
+                <button id="exportMatrixBtn" class="btn btn-info">📊 Експортувати в Excel</button>
+                <div id="rankingsMatrix" style="overflow-x: auto; margin-top: 20px;">
+                    <!-- Матриця буде додана динамічно -->
+                </div>
+            </div>
+
+            <div id="conflictsSection" class="conflicts-section" style="display: none;">
+                <h2>⚠️ Виявлені суперечності</h2>
+                <div id="conflictsList">
+                    <!-- Список суперечностей буде додано динамічно -->
+                </div>
+            </div>
+
+            <div class="compromise-section">
+                <h2>Компромісні ранжування</h2>
+                <div class="compromise-methods">
+                    <button class="btn btn-primary" data-method="kemeny-snell">Медіана Кемені-Снела</button>
+                    <button class="btn btn-primary" data-method="cook-seiford">Медіана Кука-Сейфорда</button>
+                    <button class="btn btn-primary" data-method="minimax">Мінімаксна медіана</button>
+                    <button class="btn btn-primary" data-method="gv-median">ГВ-медіана</button>
+                </div>
+                <div id="compromiseResults" style="margin-top: 20px;">
+                    <!-- Результати обчислення компромісних ранжувань -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальне вікно для додавання експерта -->
+        <div id="addExpertModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Додати нового експерта</h3>
+                <form id="addExpertForm">
+                    <div class="form-group">
+                        <label for="expertName">Ім'я експерта:</label>
+                        <input type="text" id="expertName" name="name" required placeholder="Введіть ім'я експерта">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Додати</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAddExpert">Скасувати</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Модальне вікно для ранжування експерта -->
+        <div id="expertRankingModal" class="modal" style="display: none;">
+            <div class="modal-content" style="max-width: 900px;">
+                <span class="close">&times;</span>
+                <h3 id="expertRankingTitle">Ранжування експерта</h3>
+                <div id="expertRankingContainer">
+                    <!-- Контейнер для ранжування буде додано динамічно -->
+                </div>
+                <div class="form-actions" style="margin-top: 20px;">
+                    <button id="saveExpertRanking" class="btn btn-primary">Зберегти ранжування</button>
+                    <button id="cancelExpertRanking" class="btn btn-secondary">Скасувати</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/experts.js"></script>
+</body>
+</html>
+
