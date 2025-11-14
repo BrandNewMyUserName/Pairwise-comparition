@@ -56,6 +56,22 @@ class ExpertsRankingApp {
   }
 
   setupEventListeners() {
+    // Додавання книги
+    document.getElementById('addBookBtn').addEventListener('click', () => {
+      document.getElementById('addBookModal').style.display = 'block';
+    });
+
+    document.getElementById('addBookForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await this.addBook();
+      document.getElementById('addBookModal').style.display = 'none';
+      document.getElementById('addBookForm').reset();
+    });
+
+    document.getElementById('cancelAddBook').addEventListener('click', () => {
+      document.getElementById('addBookModal').style.display = 'none';
+    });
+
     // Додавання експерта
     document.getElementById('addExpertBtn').addEventListener('click', () => {
       document.getElementById('addExpertModal').style.display = 'block';
@@ -76,8 +92,25 @@ class ExpertsRankingApp {
     // Закриття модальних вікон
     document.querySelectorAll('.close').forEach(closeBtn => {
       closeBtn.addEventListener('click', (e) => {
-        e.target.closest('.modal').style.display = 'none';
+        const modal = e.target.closest('.modal');
+        if (modal) {
+          modal.style.display = 'none';
+          // Очищаємо форму додавання книги при закритті
+          if (modal.id === 'addBookModal') {
+            document.getElementById('addBookForm').reset();
+          }
+        }
       });
+    });
+    
+    // Закриття модальних вікон при кліку поза ними
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        e.target.style.display = 'none';
+        if (e.target.id === 'addBookModal') {
+          document.getElementById('addBookForm').reset();
+        }
+      }
     });
 
     // Оновлення матриці
@@ -94,9 +127,24 @@ class ExpertsRankingApp {
     // Обчислення компромісних ранжувань
     document.querySelectorAll('[data-method]').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const method = e.target.dataset.method;
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const method = e.target.dataset.method || e.target.closest('[data-method]')?.dataset.method;
+        
+        if (!method) {
+          console.error('Метод не знайдено');
+          return;
+        }
+        
+        console.log('Обчислення компромісного ранжування методом:', method);
         await this.computeCompromiseRanking(method);
       });
+    });
+
+    // Оновлення всіх обчислень
+    document.getElementById('refreshCompromiseBtn').addEventListener('click', async () => {
+      await this.refreshAllComputations();
     });
   }
 
@@ -155,6 +203,9 @@ class ExpertsRankingApp {
     const expert = this.experts.find(e => e.id === expertId);
     if (!expert) return;
 
+    // Оновлюємо список книг перед відкриттям ранжування
+    await this.loadBooks();
+
     this.currentExpert = expert;
     document.getElementById('expertRankingTitle').textContent = `Ранжування: ${expert.name}`;
     
@@ -182,7 +233,10 @@ class ExpertsRankingApp {
     // Додаємо книги, які не ранжовані
     this.books.forEach(book => {
       if (!currentRankings.find(r => r.bookId === book.id) && !deletedBooks.includes(book.id)) {
-        sortedBooks.push(book);
+        // Перевіряємо, чи книга вже не додана
+        if (!sortedBooks.find(b => b.id === book.id)) {
+          sortedBooks.push(book);
+        }
       }
     });
 
@@ -364,9 +418,11 @@ class ExpertsRankingApp {
 
       // Тіло таблиці
       const tbody = document.createElement('tbody');
-      data.matrix.forEach((row, index) => {
+      data.matrix.forEach((row) => {
         const tr = document.createElement('tr');
-        tr.appendChild(document.createElement('td')).textContent = index + 1;
+        // Використовуємо originalNumber якщо він є, інакше знаходимо індекс
+        const originalNum = row.originalNumber !== undefined ? row.originalNumber : (data.matrix.findIndex(r => r.bookId === row.bookId) + 1);
+        tr.appendChild(document.createElement('td')).textContent = originalNum;
         tr.appendChild(document.createElement('td')).textContent = row.bookTitle;
         
         row.expertRankings.forEach(expertRanking => {
@@ -444,6 +500,19 @@ class ExpertsRankingApp {
   }
 
   async computeCompromiseRanking(method) {
+    const container = document.getElementById('compromiseResults');
+    
+    // Показуємо індикатор завантаження
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #666;"><p>⏳ Обчислення...</p></div>';
+    
+    // Блокуємо кнопки під час обчислення
+    const buttons = document.querySelectorAll('[data-method]');
+    buttons.forEach(btn => {
+      btn.disabled = true;
+      btn.style.opacity = '0.6';
+      btn.style.cursor = 'not-allowed';
+    });
+    
     try {
       const response = await fetch('/api/compute-compromise-rankings', {
         method: 'POST',
@@ -451,14 +520,20 @@ class ExpertsRankingApp {
         body: JSON.stringify({ method })
       });
 
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
       const result = await response.json();
 
       if (result.error) {
-        alert(result.error);
+        container.innerHTML = `<div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 15px; color: #721c24;">
+          <strong>Помилка:</strong> ${result.error}
+        </div>`;
         return;
       }
 
-      const container = document.getElementById('compromiseResults');
+      // Очищаємо контейнер перед додаванням нового результату
       container.innerHTML = '';
 
       const methodNames = {
@@ -469,18 +544,73 @@ class ExpertsRankingApp {
       };
 
       const resultDiv = document.createElement('div');
+      resultDiv.style.background = '#f8f9fa';
+      resultDiv.style.padding = '20px';
+      resultDiv.style.borderRadius = '8px';
+      resultDiv.style.marginBottom = '20px';
+      resultDiv.style.border = '1px solid #e5e5e5';
+      
+      let warningHtml = '';
+      if (result.warning) {
+        warningHtml = `<div style="background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 10px; margin-bottom: 15px; color: #856404;">
+          ⚠️ ${result.warning}
+        </div>`;
+      }
+      
+      let bestCountHtml = '';
+      if (result.bestPermutationsCount > 1) {
+        bestCountHtml = `<div style="background: #d1ecf1; border: 1px solid #bee5eb; border-radius: 4px; padding: 10px; margin-bottom: 15px; color: #0c5460;">
+          ℹ️ Знайдено ${result.bestPermutationsCount} оптимальних перестановок з однаковим значенням критерію.
+        </div>`;
+      }
+      
+      // Додаємо інформацію про використану метрику та критерій
+      let debugInfo = '';
+      if (result.debug) {
+        debugInfo = `<div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-bottom: 15px; font-size: 0.9rem; color: #004085;">
+          <strong>Використано:</strong> Метрика ${result.debug.metric}, Критерій ${result.debug.criterion}, Найкращий score: ${result.debug.bestScore}
+        </div>`;
+      }
+      
       resultDiv.innerHTML = `
-        <h3>${methodNames[method] || method}</h3>
-        <p><strong>Сумарна відстань:</strong> ${result.totalDistance.toFixed(2)}</p>
-        <p><strong>Максимальна відстань:</strong> ${result.maxDistance.toFixed(2)}</p>
-        <p><strong>Середня відстань:</strong> ${result.avgDistance.toFixed(2)}</p>
+        <h3 style="margin-top: 0;">${result.methodName || methodNames[method] || method}</h3>
+        ${debugInfo}
+        ${warningHtml}
+        ${bestCountHtml}
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+          <div style="background: white; padding: 15px; border-radius: 4px;">
+            <strong>Сумарна відстань:</strong><br>
+            <span style="font-size: 1.5rem; color: #0078d4;">${result.totalDistance.toFixed(2)}</span>
+          </div>
+          <div style="background: white; padding: 15px; border-radius: 4px;">
+            <strong>Максимальна відстань:</strong><br>
+            <span style="font-size: 1.5rem; color: #d13438;">${result.maxDistance.toFixed(2)}</span>
+          </div>
+          <div style="background: white; padding: 15px; border-radius: 4px;">
+            <strong>Середня відстань:</strong><br>
+            <span style="font-size: 1.5rem; color: #107c10;">${result.avgDistance.toFixed(2)}</span>
+          </div>
+        </div>
         
         <h4 style="margin-top: 20px;">Оптимальне ранжування:</h4>
-        <ol>
-          ${result.optimalRanking.sort((a, b) => a.rank - b.rank).map(item => 
-            `<li><strong>${item.bookTitle}</strong> (ранг: ${item.rank})</li>`
-          ).join('')}
-        </ol>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+          <thead>
+            <tr style="background: #f8f9fa;">
+              <th style="padding: 10px; text-align: left; border: 1px solid #e5e5e5;">Початковий номер</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #e5e5e5;">Назва об'єкта</th>
+              <th style="padding: 10px; text-align: left; border: 1px solid #e5e5e5;">Ранг у оптимальному ранжуванні</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${result.optimalRanking.sort((a, b) => a.rank - b.rank).map(item => 
+              `<tr>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; font-weight: bold;">${item.originalNumber || 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5;"><strong>${item.bookTitle}</strong></td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; font-weight: bold;">${item.rank}</td>
+              </tr>`
+            ).join('')}
+          </tbody>
+        </table>
 
         <h4 style="margin-top: 20px;">Коефіцієнти компетентності експертів:</h4>
         <table class="competence-table">
@@ -504,9 +634,22 @@ class ExpertsRankingApp {
       `;
 
       container.appendChild(resultDiv);
+      
+      // Прокручуємо до результатів
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      
     } catch (error) {
       console.error('Помилка обчислення компромісного ранжування:', error);
-      alert('Помилка обчислення компромісного ранжування');
+      container.innerHTML = `<div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 15px; color: #721c24;">
+        <strong>Помилка:</strong> ${error.message || 'Помилка обчислення компромісного ранжування'}
+      </div>`;
+    } finally {
+      // Розблоковуємо кнопки після обчислення
+      buttons.forEach(btn => {
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        btn.style.cursor = 'pointer';
+      });
     }
   }
 
@@ -530,6 +673,57 @@ class ExpertsRankingApp {
     } catch (error) {
       console.error('Помилка експорту:', error);
       alert('Помилка експорту матриці');
+    }
+  }
+
+  async refreshAllComputations() {
+    // Оновлюємо дані
+    await this.loadBooks();
+    await this.loadExperts();
+    await this.loadExpertRankings();
+    this.renderExperts();
+    this.renderRankingsMatrix();
+    this.checkConflicts();
+    
+    // Очищаємо результати компромісних ранжувань
+    document.getElementById('compromiseResults').innerHTML = '<p style="color: #666;">Натисніть на кнопку методу для обчислення компромісного ранжування.</p>';
+    
+    alert('Дані оновлено! Тепер можна обчислити компромісні ранжування.');
+  }
+
+  async addBook() {
+    try {
+      const title = document.getElementById('bookTitle').value;
+      const author = document.getElementById('bookAuthor').value;
+      const color = document.getElementById('bookColor').value;
+      const image = document.getElementById('bookImage').value;
+
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, author, color, image })
+      });
+
+      if (response.ok) {
+        const newBook = await response.json();
+        alert(`Книга "${newBook.title}" успішно додана!`);
+        
+        // Оновлюємо список книг
+        await this.loadBooks();
+        
+        // Оновлюємо матрицю та інші компоненти
+        this.renderRankingsMatrix();
+        this.checkConflicts();
+        
+        // Очищаємо результати компромісних ранжувань, оскільки список книг змінився
+        document.getElementById('compromiseResults').innerHTML = '<p style="color: #666;">Натисніть на кнопку методу для обчислення компромісного ранжування.</p>';
+      } else {
+        const error = await response.json();
+        alert(`Помилка: ${error.error || 'Не вдалося додати книгу'}`);
+      }
+    } catch (error) {
+      console.error('Помилка додавання книги:', error);
+      alert('Помилка додавання книги');
     }
   }
 }

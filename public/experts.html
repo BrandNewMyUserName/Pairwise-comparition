@@ -126,7 +126,10 @@
         <div class="experts-container">
             <div class="experts-header">
                 <h2>Експерти</h2>
-                <button id="addExpertBtn" class="btn btn-success">+ Додати експерта</button>
+                <div style="display: flex; gap: 10px;">
+                    <button id="addBookBtn" class="btn btn-success">📚 Додати книгу</button>
+                    <button id="addExpertBtn" class="btn btn-success">+ Додати експерта</button>
+                </div>
             </div>
 
             <div id="expertsList" class="experts-list">
@@ -150,7 +153,10 @@
             </div>
 
             <div class="compromise-section">
-                <h2>Компромісні ранжування</h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin: 0;">Компромісні ранжування</h2>
+                    <button id="refreshCompromiseBtn" class="btn btn-secondary">🔄 Оновити всі обчислення</button>
+                </div>
                 <div class="compromise-methods">
                     <button class="btn btn-primary" data-method="kemeny-snell">Медіана Кемені-Снела</button>
                     <button class="btn btn-primary" data-method="cook-seiford">Медіана Кука-Сейфорда</button>
@@ -193,6 +199,36 @@
                     <button id="saveExpertRanking" class="btn btn-primary">Зберегти ранжування</button>
                     <button id="cancelExpertRanking" class="btn btn-secondary">Скасувати</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Модальне вікно для додавання книги -->
+        <div id="addBookModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Додати нову книгу</h3>
+                <form id="addBookForm">
+                    <div class="form-group">
+                        <label for="bookTitle">Назва книги:</label>
+                        <input type="text" id="bookTitle" name="title" required placeholder="Введіть назву книги">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAuthor">Автор:</label>
+                        <input type="text" id="bookAuthor" name="author" required placeholder="Введіть ім'я автора">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookColor">Колір:</label>
+                        <input type="color" id="bookColor" name="color" value="#3498db">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookImage">URL зображення (опціонально):</label>
+                        <input type="url" id="bookImage" name="image" placeholder="https://example.com/image.jpg">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Додати</button>
+                        <button type="button" class="btn btn-secondary" id="cancelAddBook">Скасувати</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

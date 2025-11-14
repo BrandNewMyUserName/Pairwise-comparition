@@ -16,6 +16,53 @@ app.use(express.json());
 let experts = []; // [{ id, name, rankings: [{ bookId, rank }], deletedBooks: [bookId] }]
 let expertIdCounter = 1;
 
+// Хранилище для книг (динамічне, можна додавати нові)
+let books = [
+  { 
+    id: 1, 
+    title: "Гаррі Поттер", 
+    author: "Дж. К. Роулінг", 
+    color: "#FF6B6B", 
+    image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" 
+  },
+  { 
+    id: 2, 
+    title: "Володар кілець", 
+    author: "Дж. Р. Р. Толкін", 
+    color: "#4ECDC4", 
+    image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" 
+  },
+  { 
+    id: 3, 
+    title: "1984", 
+    author: "Джордж Оруелл", 
+    color: "#45B7D1", 
+    image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
+  },
+  { 
+    id: 4, 
+    title: "Великий Гетсбі", 
+    author: "Френсіс Скотт Фіцджеральд", 
+    color: "#96CEB4", 
+    image: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" 
+  },
+  { 
+    id: 5, 
+    title: "Гордість і упередження", 
+    author: "Джейн Остін", 
+    color: "#FFEAA7", 
+    image: "https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg" 
+  },
+  { 
+    id: 6, 
+    title: "Мобі Дік", 
+    author: "Герман Мелвілл", 
+    color: "#DDA0DD", 
+    image: "https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg" 
+  }
+];
+let nextBookId = 7; // Наступний ID для нової книги
+
 // Настройка multer для загрузки файлов
 const upload = multer({ 
   dest: 'uploads/',
@@ -59,57 +106,76 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Функция для получения списка книг (дублируем логику из /api/books)
+// Функция для получения списка книг
 function getBooks() {
-  return [
-    { 
-      id: 1, 
-      title: "Гаррі Поттер", 
-      author: "Дж. К. Роулінг", 
-      color: "#FF6B6B", 
-      image: "https://covers.openlibrary.org/b/isbn/9780747532699-M.jpg" 
-    },
-    { 
-      id: 2, 
-      title: "Володар кілець", 
-      author: "Дж. Р. Р. Толкін", 
-      color: "#4ECDC4", 
-      image: "https://covers.openlibrary.org/b/isbn/9780544003415-M.jpg" 
-    },
-    { 
-      id: 3, 
-      title: "1984", 
-      author: "Джордж Оруелл", 
-      color: "#45B7D1", 
-      image: "https://covers.openlibrary.org/b/isbn/9780451524935-M.jpg" 
-    },
-    { 
-      id: 4, 
-      title: "Великий Гетсбі", 
-      author: "Френсіс Скотт Фіцджеральд", 
-      color: "#96CEB4", 
-      image: "https://covers.openlibrary.org/b/isbn/9780743273565-M.jpg" 
-    },
-    { 
-      id: 5, 
-      title: "Гордість і упередження", 
-      author: "Джейн Остін", 
-      color: "#FFEAA7", 
-      image: "https://covers.openlibrary.org/b/isbn/9780141439518-M.jpg" 
-    },
-    { 
-      id: 6, 
-      title: "Мобі Дік", 
-      author: "Герман Мелвілл", 
-      color: "#DDA0DD", 
-      image: "https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg" 
-    }
-  ];
+  return books;
 }
 
 // API для получения списка книг
 app.get('/api/books', (req, res) => {
-  res.json(getBooks());
+  res.json(books);
+});
+
+// API для добавления новой книги
+app.post('/api/books', (req, res) => {
+  try {
+    const { title, author, color, image } = req.body;
+    
+    if (!title || !title.trim()) {
+      return res.status(400).json({ error: 'Назва книги обов\'язкова' });
+    }
+    
+    if (!author || !author.trim()) {
+      return res.status(400).json({ error: 'Автор обов\'язковий' });
+    }
+    
+    const newBook = {
+      id: nextBookId++,
+      title: title.trim(),
+      author: author.trim(),
+      color: color || `#${Math.floor(Math.random()*16777215).toString(16).padStart(6, '0')}`,
+      image: image && image.trim() ? image.trim() : null
+    };
+    
+    books.push(newBook);
+    
+    console.log('Додано нову книгу:', newBook);
+    
+    res.json(newBook);
+  } catch (error) {
+    console.error('Помилка додавання книги:', error);
+    res.status(500).json({ error: 'Помилка при додаванні книги' });
+  }
+});
+
+// API для удаления книги
+app.delete('/api/books/:bookId', (req, res) => {
+  try {
+    const bookId = parseInt(req.params.bookId);
+    const bookIndex = books.findIndex(b => b.id === bookId);
+    
+    if (bookIndex === -1) {
+      return res.status(404).json({ error: 'Книга не знайдена' });
+    }
+    
+    // Видаляємо книгу зі списку
+    const deletedBook = books.splice(bookIndex, 1)[0];
+    
+    // Видаляємо книгу з ранжувань всіх експертів
+    experts.forEach(expert => {
+      expert.rankings = expert.rankings.filter(r => r.bookId !== bookId);
+      if (!expert.deletedBooks.includes(bookId)) {
+        expert.deletedBooks.push(bookId);
+      }
+    });
+    
+    console.log('Видалено книгу:', deletedBook);
+    
+    res.json({ success: true, deletedBook });
+  } catch (error) {
+    console.error('Помилка видалення книги:', error);
+    res.status(500).json({ error: 'Помилка при видаленні книги' });
+  }
 });
 
 // API для экспорта матрицы в Excel
@@ -279,11 +345,13 @@ app.get('/api/experts-rankings-matrix', async (req, res) => {
     const books = getBooks();
     
     // Создаем матрицу: строки - книги, столбцы - эксперты
-    const matrix = books.map(book => {
+    // Додаємо початковий номер книги (індекс + 1 в масиві books)
+    const matrix = books.map((book, index) => {
       const row = {
         bookId: book.id,
         bookTitle: book.title,
         bookAuthor: book.author,
+        originalNumber: index + 1, // Початковий номер об'єкта
         expertRankings: experts.map(expert => {
           const ranking = expert.rankings.find(r => r.bookId === book.id);
           const isDeleted = expert.deletedBooks.includes(book.id);
@@ -310,6 +378,10 @@ app.post('/api/compute-compromise-rankings', async (req, res) => {
   try {
     const { method } = req.body; // 'kemeny-snell', 'cook-seiford', 'minimax', 'gv-median'
     
+    console.log('=== ОБЧИСЛЕННЯ КОМПРОМІСНОГО РАНЖУВАННЯ ===');
+    console.log('Метод:', method);
+    console.log('Тип методу:', typeof method);
+    
     // Получаем список всех книг
     const books = getBooks();
     
@@ -321,8 +393,19 @@ app.post('/api/compute-compromise-rankings', async (req, res) => {
       deletedBooks: expert.deletedBooks
     }));
     
+    console.log('Кількість експертів:', expertRankings.length);
+    console.log('Кількість книг:', books.length);
+    
     // Вычисляем компромисное ранжирование
     const result = computeCompromiseRanking(books, expertRankings, method);
+    
+    console.log('Результат обчислення:', {
+      method: result.method,
+      totalDistance: result.totalDistance,
+      maxDistance: result.maxDistance,
+      optimalRankingCount: result.optimalRanking?.length
+    });
+    console.log('==========================================');
     
     res.json(result);
   } catch (error) {
@@ -330,6 +413,39 @@ app.post('/api/compute-compromise-rankings', async (req, res) => {
     res.status(500).json({ error: 'Помилка при обчисленні' });
   }
 });
+
+// Функции для вычисления расстояний (из results.js)
+function cookDistance(orderA, orderB, ids) {
+  let d = 0;
+  ids.forEach((id) => {
+    const a = orderA.indexOf(id);
+    const b = orderB.indexOf(id);
+    if (a >= 0 && b >= 0) d += Math.abs(a - b);
+  });
+  return d;
+}
+
+function pairwiseVector(order, ids) {
+  const pos = new Map();
+  ids.forEach((id) => pos.set(id, order.indexOf(id)));
+  const v = [];
+  for (let i = 0; i < ids.length; i++) {
+    for (let j = i + 1; j < ids.length; j++) {
+      const pi = pos.get(ids[i]);
+      const pj = pos.get(ids[j]);
+      v.push(pi >= 0 && pj >= 0 ? (pi < pj ? 1 : -1) : 0);
+    }
+  }
+  return v;
+}
+
+function hammingDistanceFromOrders(orderA, orderB, ids) {
+  const a = pairwiseVector(orderA, ids);
+  const b = pairwiseVector(orderB, ids);
+  let s = 0;
+  for (let t = 0; t < a.length; t++) s += Math.abs(a[t] - b[t]);
+  return s;
+}
 
 // Функция для вычисления компромисного ранжирования
 function computeCompromiseRanking(books, expertRankings, method) {
@@ -340,103 +456,135 @@ function computeCompromiseRanking(books, expertRankings, method) {
     return { error: 'Немає експертів' };
   }
   
-  // Создаем матрицы парных сравнений для каждого эксперта
-  const expertMatrices = expertRankings.map(expert => {
-    const matrix = Array(n).fill(null).map(() => Array(n).fill(0));
-    
-    // Заполняем матрицу на основе ранжирования
-    // Сначала устанавливаем все значения на основе рангов
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (i === j) {
-          matrix[i][j] = 0;
-        } else {
-          const bookI = books[i];
-          const bookJ = books[j];
-          
-          const rankingI = expert.rankings.find(r => r.bookId === bookI.id);
-          const rankingJ = expert.rankings.find(r => r.bookId === bookJ.id);
-          
-          // Если книга удалена экспертом, не учитываем её
-          if (expert.deletedBooks.includes(bookI.id) || expert.deletedBooks.includes(bookJ.id)) {
-            matrix[i][j] = 0;
-          } else if (rankingI && rankingJ) {
-            if (rankingI.rank < rankingJ.rank) {
-              matrix[i][j] = 1; // bookI лучше bookJ
-            } else if (rankingI.rank > rankingJ.rank) {
-              matrix[i][j] = -1;
-            } else {
-              matrix[i][j] = 0;
-            }
-          } else {
-            matrix[i][j] = 0;
-          }
-        }
-      }
-    }
-    
-    return matrix;
-  });
+  // Визначаємо ID книг, які присутні у всіх експертів (не видалені жодним)
+  const allBookIds = books.map(b => b.id);
+  const validBookIds = allBookIds.filter(id =>
+    expertRankings.every(expert => !expert.deletedBooks.includes(id))
+  );
   
-  // Вычисляем расстояния (метрика Хемминга)
-  const distances = [];
-  const allPossibleRankings = generateAllRankings(n);
-  
-  allPossibleRankings.forEach(ranking => {
-    const rankingMatrix = rankingToMatrix(ranking, n);
-    let totalDistance = 0;
-    let maxDistance = 0;
-    
-    expertMatrices.forEach((expertMatrix, expertIndex) => {
-      const distance = hammingDistance(rankingMatrix, expertMatrix, n);
-      totalDistance += distance;
-      maxDistance = Math.max(maxDistance, distance);
-    });
-    
-    distances.push({
-      ranking: [...ranking], // Копируем массив
-      totalDistance,
-      maxDistance,
-      avgDistance: totalDistance / k
-    });
-  });
-  
-  if (distances.length === 0) {
-    return { error: 'Не вдалося згенерувати ранжування' };
+  if (validBookIds.length === 0) {
+    return { error: 'Немає книг, які присутні у всіх експертів' };
   }
   
-  // Выбираем оптимальное ранжирование в зависимости от метода
-  let optimalRanking;
-  if (method === 'kemeny-snell' || method === 'cook-seiford') {
-    // Минимизируем сумму расстояний
-    optimalRanking = distances.reduce((min, d) => 
-      d.totalDistance < min.totalDistance ? d : min
-    );
-  } else if (method === 'minimax' || method === 'gv-median') {
-    // Минимизируем максимальное расстояние
-    optimalRanking = distances.reduce((min, d) => 
-      d.maxDistance < min.maxDistance ? d : min
-    );
+  // Перетворюємо ранжування експертів у порядки (масиви ID)
+  const expertOrders = expertRankings.map(expert => {
+    // Створюємо масив об'єктів {bookId, rank}
+    const rankedBooks = expert.rankings
+      .filter(r => validBookIds.includes(r.bookId))
+      .sort((a, b) => a.rank - b.rank);
+    
+    // Повертаємо порядок ID
+    return rankedBooks.map(r => r.bookId);
+  });
+  
+  // Генеруємо всі можливі перестановки валідних книг
+  const { permutations: allPermutations, total, cap, isLimited } = generatePermutationsWithCap(validBookIds);
+  
+  if (allPermutations.length === 0) {
+    return { error: 'Не вдалося згенерувати перестановки' };
+  }
+  
+  // Додаємо попередження, якщо обмежено
+  const warning = isLimited ? `Увага: n=${validBookIds.length}, всього перестановок ${total.toLocaleString()} — аналізуємо ${cap.toLocaleString()}.` : null;
+  
+  // Визначаємо функцію відстані та критерій залежно від методу
+  let distFn;
+  let useSum;
+  let methodName;
+  
+  // Нормалізуємо назву методу (на випадок пробілів або інших символів)
+  const normalizedMethod = String(method).trim().toLowerCase();
+  
+  if (normalizedMethod === 'cook-seiford') {
+    // Медіана Кука-Сейфорда: метрика неспівпадання рангів + адитивний критерій
+    distFn = cookDistance;
+    useSum = true;
+    methodName = 'Медіана Кука-Сейфорда';
+  } else if (normalizedMethod === 'kemeny-snell') {
+    // Медіана Кемені-Снела: метрика Хеммінга + адитивний критерій
+    distFn = hammingDistanceFromOrders;
+    useSum = true;
+    methodName = 'Медіана Кемені-Снела';
+  } else if (normalizedMethod === 'minimax') {
+    // Мінімаксна медіана: метрика Хеммінга + мінімаксний критерій
+    distFn = hammingDistanceFromOrders;
+    useSum = false;
+    methodName = 'Мінімаксна медіана';
+  } else if (normalizedMethod === 'gv-median') {
+    // ГВ-медіана: метрика Хеммінга + мінімаксний критерій
+    distFn = hammingDistanceFromOrders;
+    useSum = false;
+    methodName = 'ГВ-медіана';
   } else {
-    // По умолчанию - медиана Кемени-Снела
-    optimalRanking = distances.reduce((min, d) => 
-      d.totalDistance < min.totalDistance ? d : min
-    );
+    // За замовчуванням - медіана Кемені-Снела
+    console.warn(`Невідомий метод: ${method}, використовується медіана Кемені-Снела`);
+    distFn = hammingDistanceFromOrders;
+    useSum = true;
+    methodName = 'Медіана Кемені-Снела (за замовчуванням)';
   }
   
-  // Вычисляем коэффициенты компетентности экспертов
-  const optimalMatrix = rankingToMatrix(optimalRanking.ranking, n);
-  const competenceCoefficients = expertMatrices.map((expertMatrix, index) => {
-    const distance = hammingDistance(optimalMatrix, expertMatrix, n);
+  console.log(`Обчислення методом: ${methodName} (${normalizedMethod})`);
+  console.log(`Використовується метрика: ${distFn === cookDistance ? 'Cook (неспівпадання рангів)' : 'Hamming (Хеммінга)'}`);
+  console.log(`Критерій: ${useSum ? 'Адитивний (сума)' : 'Мінімаксний (максимум)'}`);
+  
+  let bestVal = Infinity;
+  let bestPermutations = [];
+  
+  // Обчислюємо відстані для кожної перестановки
+  allPermutations.forEach((perm, idx) => {
+    const dists = expertOrders.map(expertOrder =>
+      distFn(perm, expertOrder, validBookIds)
+    );
+    const sum = dists.reduce((a, b) => a + b, 0);
+    const max = Math.max(...dists);
+    const score = useSum ? sum : max;
+    
+    if (score < bestVal) {
+      bestVal = score;
+      bestPermutations = [{ perm, dists, sum, max, index: idx + 1 }];
+    } else if (score === bestVal) {
+      bestPermutations.push({ perm, dists, sum, max, index: idx + 1 });
+    }
+  });
+  
+  console.log(`Знайдено ${bestPermutations.length} оптимальних перестановок з score=${bestVal}`);
+  
+  if (bestPermutations.length === 0) {
+    return { error: 'Не знайдено оптимального ранжування' };
+  }
+  
+  // Вибираємо першу найкращу перестановку
+  const best = bestPermutations[0];
+  
+  // Створюємо результат у форматі ранжування
+  // Додаємо початковий номер книги для узгодженості з матрицею
+  const rankingResults = [];
+  best.perm.forEach((bookId, position) => {
+    const book = books.find(b => b.id === bookId);
+    if (book) {
+      // Знаходимо початковий номер книги (індекс + 1 в масиві books)
+      const originalIndex = books.findIndex(b => b.id === bookId);
+      rankingResults.push({
+        bookId: book.id,
+        bookTitle: book.title,
+        rank: position + 1, // Ранг у оптимальному ранжуванні
+        originalNumber: originalIndex + 1 // Початковий номер об'єкта
+      });
+    }
+  });
+  
+  // Обчислюємо коефіцієнти компетентності
+  const competenceCoefficients = expertOrders.map((expertOrder, index) => {
+    const distance = distFn(best.perm, expertOrder, validBookIds);
     return {
       expertId: expertRankings[index].expertId,
       expertName: expertRankings[index].expertName,
       distance: distance,
-      competence: 1 / (1 + distance) // Нормализованный коэффициент
+      competence: 1 / (1 + distance)
     };
   });
   
-  // Нормализуем коэффициенты компетентности
+  // Нормалізуємо коефіцієнти компетентності
   const totalCompetence = competenceCoefficients.reduce((sum, c) => sum + c.competence, 0);
   if (totalCompetence > 0) {
     competenceCoefficients.forEach(c => {
@@ -444,121 +592,66 @@ function computeCompromiseRanking(books, expertRankings, method) {
     });
   }
   
-  // Создаем массив результатов с правильным порядком книг
-  const rankingResults = [];
-  for (let rank = 1; rank <= n; rank++) {
-    const bookIndex = optimalRanking.ranking.findIndex(r => r === rank);
-    if (bookIndex !== -1) {
-      rankingResults.push({
-        bookId: books[bookIndex].id,
-        bookTitle: books[bookIndex].title,
-        rank: rank
-      });
-    }
-  }
-  
   return {
-    method,
+    method: normalizedMethod, // Використовуємо нормалізований метод
+    methodName: methodName, // Додаємо читабельну назву
     optimalRanking: rankingResults,
-    totalDistance: optimalRanking.totalDistance,
-    maxDistance: optimalRanking.maxDistance,
-    avgDistance: optimalRanking.avgDistance,
-    competenceCoefficients
+    totalDistance: best.sum,
+    maxDistance: best.max,
+    avgDistance: best.sum / k,
+    competenceCoefficients,
+    bestPermutationsCount: bestPermutations.length,
+    warning: warning,
+    // Додаємо інформацію про використану метрику та критерій для відлагодження
+    debug: {
+      metric: distFn === cookDistance ? 'Cook' : 'Hamming',
+      criterion: useSum ? 'Sum' : 'Max',
+      bestScore: bestVal
+    }
   };
 }
 
-// Генерация всех возможных ранжирований (для малых n)
-function generateAllRankings(n) {
-  if (n > 6) {
-    // Для больших n используем эвристику
-    return generateHeuristicRankings(n);
-  }
-  
-  const rankings = [];
-  const indices = Array.from({ length: n }, (_, i) => i);
-  
-  function permute(arr, start = 0) {
-    if (start === arr.length - 1) {
-      rankings.push([...arr]);
+// Генерация всех возможных перестановок (из results.js)
+function generatePermutations(arr, cap = Infinity) {
+  const out = [];
+  (function bt(a, l) {
+    if (out.length >= cap) return;
+    if (l === a.length) {
+      out.push(a.slice());
       return;
     }
-    
-    for (let i = start; i < arr.length; i++) {
-      [arr[start], arr[i]] = [arr[i], arr[start]];
-      permute(arr, start + 1);
-      [arr[start], arr[i]] = [arr[i], arr[start]];
+    for (let i = l; i < a.length; i++) {
+      [a[l], a[i]] = [a[i], a[l]];
+      bt(a, l + 1);
+      [a[l], a[i]] = [a[i], a[l]];
+      if (out.length >= cap) return;
     }
-  }
-  
-  permute(indices);
-  return rankings.map(ranking => ranking.map((_, i) => i + 1));
+  })(arr.slice(), 0);
+  return out;
 }
 
-// Эвристическая генерация ранжирований для больших n
-function generateHeuristicRankings(n) {
-  // Генерируем ограниченное количество ранжирований на основе средних рангов
-  const rankings = [];
-  const baseRanking = Array.from({ length: n }, (_, i) => i + 1);
-  rankings.push([...baseRanking]);
-  
-  // Добавляем несколько вариаций
-  for (let i = 0; i < Math.min(100, factorial(n)); i++) {
-    const ranking = [...baseRanking];
-    // Случайные перестановки
-    for (let j = 0; j < n; j++) {
-      const k = Math.floor(Math.random() * n);
-      [ranking[j], ranking[k]] = [ranking[k], ranking[j]];
-    }
-    rankings.push(ranking);
-  }
-  
-  return rankings;
+function factorialSafe(n) {
+  let f = 1;
+  for (let i = 2; i <= n; i++) f *= i;
+  return f;
 }
 
-function factorial(n) {
-  if (n <= 1) return 1;
-  return n * factorial(n - 1);
+// Функция для генерации перестановок з обмеженням для великих n
+function generatePermutationsWithCap(ids) {
+  const n = ids.length;
+  const hardCap = 40000000;
+  const softCap = 10000;
+  const total = factorialSafe(n);
+  const cap = Math.min(total, hardCap);
+  
+  return {
+    permutations: generatePermutations(ids, cap),
+    total,
+    cap,
+    isLimited: total > softCap
+  };
 }
 
-// Преобразование ранжирования в матрицу парных сравнений
-// ranking - массив рангов для каждой книги (индекс = позиция книги в массиве books)
-function rankingToMatrix(ranking, n) {
-  const matrix = Array(n).fill(null).map(() => Array(n).fill(0));
-  
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      if (i === j) {
-        matrix[i][j] = 0;
-      } else if (ranking[i] < ranking[j]) {
-        matrix[i][j] = 1; // i лучше j
-        matrix[j][i] = -1;
-      } else if (ranking[i] > ranking[j]) {
-        matrix[i][j] = -1;
-        matrix[j][i] = 1;
-      } else {
-        matrix[i][j] = 0;
-        matrix[j][i] = 0;
-      }
-    }
-  }
-  
-  return matrix;
-}
-
-// Вычисление расстояния Хемминга между двумя матрицами
-function hammingDistance(matrix1, matrix2, n) {
-  let distance = 0;
-  
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      if (matrix1[i][j] !== matrix2[i][j]) {
-        distance += Math.abs(matrix1[i][j] - matrix2[i][j]);
-      }
-    }
-  }
-  
-  return distance / 2; // Делим на 2, так как учитываем каждую пару дважды
-}
 
 // API для экспорта матрицы ранжирований экспертов в Excel
 app.post('/api/export-experts-matrix', async (req, res) => {
@@ -574,10 +667,10 @@ app.post('/api/export-experts-matrix', async (req, res) => {
     const header = ['Початковий номер', 'Назва об\'єкта', ...experts.map(e => e.name)];
     excelData.push(header);
     
-    // Данные
+    // Данные - використовуємо початковий номер (індекс + 1)
     books.forEach((book, index) => {
       const row = [
-        index + 1,
+        index + 1, // Початковий номер об'єкта
         book.title,
         ...experts.map(expert => {
           const ranking = expert.rankings.find(r => r.bookId === book.id);
