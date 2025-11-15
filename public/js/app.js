@@ -13,7 +13,7 @@ class BookRankingApp {
     
     this.isMatrixVisible = false;
     this.draggedElement = null;
-    this.nextBookId = 7; // Для новых книг
+    this.nextBookId = 11; // Для новых книг
     
     this.init();
   }
@@ -74,6 +74,34 @@ class BookRankingApp {
           author: "Герман Мелвілл", 
           color: "#DDA0DD", 
           image: "https://covers.openlibrary.org/b/isbn/9780142437247-M.jpg" 
+        },
+        { 
+          id: 7, 
+          title: "Кобзар", 
+          author: "Тарас Шевченко", 
+          color: "#FFB347", 
+          image: "https://covers.openlibrary.org/b/isbn/9789660300000-M.jpg" 
+        },
+        { 
+          id: 8, 
+          title: "Лісова пісня", 
+          author: "Леся Українка", 
+          color: "#87CEEB", 
+          image: "https://covers.openlibrary.org/b/isbn/9789660300001-M.jpg" 
+        },
+        { 
+          id: 9, 
+          title: "Тіні забутих предків", 
+          author: "Михайло Коцюбинський", 
+          color: "#98D8C8", 
+          image: "https://covers.openlibrary.org/b/isbn/9789660300002-M.jpg" 
+        },
+        { 
+          id: 10, 
+          title: "Записки українського самашедшего", 
+          author: "Оксана Забужко", 
+          color: "#F7DC6F", 
+          image: "https://covers.openlibrary.org/b/isbn/9789660300003-M.jpg" 
         }
       ];
     }
