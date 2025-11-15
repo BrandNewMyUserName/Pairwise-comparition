@@ -579,18 +579,70 @@ function computeCompromiseRanking(books, expertRankings, method) {
     return {
       expertId: expertRankings[index].expertId,
       expertName: expertRankings[index].expertName,
-      distance: distance,
-      competence: 1 / (1 + distance)
+      distance: distance
     };
   });
   
-  // Нормалізуємо коефіцієнти компетентності
-  const totalCompetence = competenceCoefficients.reduce((sum, c) => sum + c.competence, 0);
-  if (totalCompetence > 0) {
-    competenceCoefficients.forEach(c => {
-      c.competence = c.competence / totalCompetence;
+  // Знаходимо найбільшу відстань
+  const distances = competenceCoefficients.map(c => c.distance);
+  const maxDistance = distances.length > 0 ? Math.max(...distances) : 0;
+  
+  // Обчислюємо співвідношення рангів (maxDistance / distance)
+  // Чим менша відстань, тим більше співвідношення
+  competenceCoefficients.forEach(c => {
+
+    c.ratio = c.distance / maxDistance;
+
+  });
+  
+  // Обчислюємо нормовані коефіцієнти (співвідношення / сума всіх співвідношень)
+  const totalRatio = competenceCoefficients.reduce((sum, c) => sum + (c.ratio || 0), 0);
+  competenceCoefficients.forEach(c => {
+    if (totalRatio > 0 && c.ratio !== undefined && !isNaN(c.ratio) && isFinite(c.ratio)) {
+      c.normalized = c.ratio / totalRatio;
+    } else {
+      c.normalized = 0;
+    }
+    // Переконуємося, що normalized завжди є числом
+    if (isNaN(c.normalized) || !isFinite(c.normalized)) {
+      c.normalized = 0;
+    }
+  });
+  
+  // Обчислюємо ідеальні коефіцієнти
+  // Згідно з прикладом: ідеальні = нормовані / max(нормовані)
+  // Це дає значення від 0 до 1, де найбільший нормований коефіцієнт = 1.00
+  const normalizedValues = competenceCoefficients.map(c => c.normalized || 0);
+  const maxNormalized = normalizedValues.length > 0 ? Math.max(...normalizedValues) : 0;
+  competenceCoefficients.forEach(c => {
+    if (maxNormalized > 0 && c.normalized !== undefined && !isNaN(c.normalized) && isFinite(c.normalized)) {
+      c.ideal = c.normalized / maxNormalized;
+    } else {
+      c.ideal = 0;
+    }
+    // Переконуємося, що ideal завжди є числом
+    if (isNaN(c.ideal) || !isFinite(c.ideal)) {
+      c.ideal = 0;
+    }
+  });
+  
+  // Додаємо старий коефіцієнт компетентності для сумісності
+  competenceCoefficients.forEach(c => {
+    c.competence = c.normalized || 0; // Використовуємо нормований як основний
+  });
+  
+  // Логування для діагностики
+  console.log('=== КОЕФІЦІЄНТИ КОМПЕТЕНТНОСТІ ===');
+  console.log('maxDistance:', maxDistance);
+  competenceCoefficients.forEach((c, idx) => {
+    console.log(`Експерт ${idx + 1} (${c.expertName}):`, {
+      distance: c.distance,
+      ratio: c.ratio,
+      normalized: c.normalized,
+      ideal: c.ideal
     });
-  }
+  });
+  console.log('===================================');
   
   return {
     method: normalizedMethod, // Використовуємо нормалізований метод
@@ -598,6 +650,7 @@ function computeCompromiseRanking(books, expertRankings, method) {
     optimalRanking: rankingResults,
     totalDistance: best.sum,
     maxDistance: best.max,
+    maxDistanceAmongExperts: maxDistance, // Найбільша відстань серед експертів
     avgDistance: best.sum / k,
     competenceCoefficients,
     bestPermutationsCount: bestPermutations.length,

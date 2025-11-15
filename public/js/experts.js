@@ -526,6 +526,22 @@ class ExpertsRankingApp {
 
       const result = await response.json();
 
+      // Логування для діагностики
+      console.log('=== РЕЗУЛЬТАТ ОБЧИСЛЕННЯ ===');
+      console.log('competenceCoefficients:', result.competenceCoefficients);
+      if (result.competenceCoefficients) {
+        result.competenceCoefficients.forEach((c, idx) => {
+          console.log(`Експерт ${idx + 1}:`, {
+            expertName: c.expertName,
+            distance: c.distance,
+            ratio: c.ratio,
+            normalized: c.normalized,
+            ideal: c.ideal
+          });
+        });
+      }
+      console.log('============================');
+
       if (result.error) {
         container.innerHTML = `<div style="background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; padding: 15px; color: #721c24;">
           <strong>Помилка:</strong> ${result.error}
@@ -613,24 +629,70 @@ class ExpertsRankingApp {
         </table>
 
         <h4 style="margin-top: 20px;">Коефіцієнти компетентності експертів:</h4>
-        <table class="competence-table">
-          <thead>
-            <tr>
-              <th>Експерт</th>
-              <th>Відстань</th>
-              <th>Коефіцієнт компетентності</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${result.competenceCoefficients.map(c => `
-              <tr>
-                <td>${c.expertName}</td>
-                <td>${c.distance.toFixed(2)}</td>
-                <td>${(c.competence * 100).toFixed(2)}%</td>
+        ${result.maxDistanceAmongExperts !== undefined ? `
+          <div style="background: #e7f3ff; border: 1px solid #b3d9ff; border-radius: 4px; padding: 10px; margin-bottom: 15px; font-size: 0.9rem; color: #004085;">
+            <strong>Найбільша відстань серед експертів:</strong> ${result.maxDistanceAmongExperts.toFixed(2)}
+          </div>
+        ` : ''}
+        <div style="overflow-x: auto;">
+          <table class="competence-table" style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+            <thead>
+              <tr style="background: #f8f9fa;">
+                <th style="padding: 10px; text-align: left; border: 1px solid #e5e5e5;">Експерти</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">Відстані експертів</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">Співвідношення рангів</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">Нормовані коефіцієнти</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5;">Нормовані коефіцієнти, %</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5; color: #d13438;">Ідеальні коефіцієнти</th>
+                <th style="padding: 10px; text-align: center; border: 1px solid #e5e5e5; color: #d13438;">Ідеальні коефіцієнти, %</th>
               </tr>
-            `).join('')}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              ${result.competenceCoefficients.map((c, idx) => {
+                // Перевіряємо, чи значення існують (навіть якщо вони 0)
+                const ratio = (c.ratio !== undefined && !isNaN(c.ratio)) ? c.ratio.toFixed(2) : 'N/A';
+                const normalized = (c.normalized !== undefined && !isNaN(c.normalized)) ? c.normalized.toFixed(2) : 'N/A';
+                const normalizedPercent = (c.normalized !== undefined && !isNaN(c.normalized)) ? (c.normalized * 100).toFixed(0) + '%' : 'N/A';
+                const ideal = (c.ideal !== undefined && !isNaN(c.ideal)) ? c.ideal.toFixed(2) : 'N/A';
+                const idealPercent = (c.ideal !== undefined && !isNaN(c.ideal)) ? (c.ideal * 100).toFixed(0) + '%' : 'N/A';
+                
+                return `
+                <tr>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; font-weight: bold;">${idx + 1}<br><span style="font-size: 0.85em; color: #666; font-weight: normal;">${c.expertName}</span></td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${c.distance !== undefined ? c.distance.toFixed(0) : 'N/A'}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${ratio}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; font-weight: bold;">${normalized}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${normalizedPercent}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; color: #d13438; font-weight: bold;">${ideal}</td>
+                  <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; color: #d13438;">${idealPercent}</td>
+                </tr>
+                `;
+              }).join('')}
+              ${(() => {
+                // Обчислюємо максимум з normalized значень один раз
+                const normalizedValues = result.competenceCoefficients
+                  .map(c => c.normalized)
+                  .filter(val => val !== undefined && !isNaN(val) && isFinite(val))
+                  .map(val => Number(val));
+                const maxNormalized = normalizedValues.length > 0 ? Math.max(...normalizedValues) : 0;
+                const maxNormalizedFormatted = maxNormalized.toFixed(2);
+                const maxNormalizedPercent = (maxNormalized * 100).toFixed(0) + '%';
+                
+                return `
+              <tr style="background: #f8f9fa; font-weight: bold;">
+                <td style="padding: 10px; border: 1px solid #e5e5e5;"></td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${result.maxDistanceAmongExperts !== undefined ? result.maxDistanceAmongExperts.toFixed(0) : 'N/A'}</td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${result.competenceCoefficients.reduce((sum, c) => sum + (c.ratio || 0), 0).toFixed(2)}</td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; color: #d13438;">${maxNormalizedFormatted}</td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center;">${maxNormalizedPercent}</td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; color: #d13438;"></td>
+                <td style="padding: 10px; border: 1px solid #e5e5e5; text-align: center; color: #d13438;"></td>
+              </tr>
+                `;
+              })()}
+            </tbody>
+          </table>
+        </div>
       `;
 
       container.appendChild(resultDiv);
